@@ -1,6 +1,7 @@
 import pygame
 from utils import width, height, draw_popup, fps
 from objects import Pacman, Piecesmap
+from session_status import best, total
 
 def main():
     pygame.init()
@@ -57,6 +58,8 @@ def main():
         else:
             pacman.handle_input()
             pieces.handle_input(pacman.x, pacman.y)
+
+            total['pieces'] += pieces.cpt_pieces
 
             pieces.draw(screen)
             pacman.draw(screen)
