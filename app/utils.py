@@ -25,3 +25,4 @@ def draw_popup(surface, victory:bool, font):
     text_rect = text.get_rect(center=(200, 100))
     popup.blit(text, text_rect)
     surface.blit(popup, ((width - 400) // 2, (height - 200) // 2))
+
