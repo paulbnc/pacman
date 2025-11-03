@@ -1,6 +1,6 @@
 import pygame
-from utils import width, height, draw_popup, fps, piece_size, shape_piece_map, HUD_HEIGHT
-from objects import Pacman, Piecesmap
+from utils import width, height, draw_popup, fps, piece_size, shape_piece_map, HUD_HEIGHT, pacman_health
+from objects import Pacman, Piecesmap, horde
 from session_status import best, total
 import time
 import numpy as np
@@ -20,6 +20,7 @@ def main():
 
     pacman = Pacman(width // 2, height // 2 + HUD_HEIGHT)
     pieces = Piecesmap()
+    enemies = horde(nb=5)  # 👈 Horde d’ennemis
     victory_mode = False
     nb_pieces_partie = np.sum(pieces.map)
 
@@ -52,6 +53,7 @@ def main():
                 if click:
                     pacman = Pacman(width // 2, height // 2 + HUD_HEIGHT)
                     pieces = Piecesmap()
+                    enemies = horde(nb=5)
                     nb_pieces_partie = np.sum(pieces.map)
                     victory_mode = False
                     start_time = time.time()
@@ -71,15 +73,24 @@ def main():
             # Gestion du joueur et des pièces
             pacman.handle_input()
             pieces.handle_input(pacman)
+            pacman.clean_bullets()
+
+            # Gestion des ennemis
+            enemies.update_enemies()
+            enemies.handle_input(pacman)
 
             # Mise à jour du total de pièces mangées
             total['pieces'] += pieces.cpt_pieces
 
+            # Dessin
             pieces.draw(screen)
+            enemies.draw(screen)
             pacman.draw(screen)
-            pacman.clean_bullets()
             pacman.update_bullets(screen)
             
+            # Vérifie si Pacman est mort
+            if not pacman.alive:
+                victory_mode = True  # On termine la partie sur défaite
 
             # Victoire
             if pieces.victory():
@@ -90,15 +101,17 @@ def main():
                     best['pieces'] = nb_pieces_partie
                     best['time'] = elapsed_time
 
-        # Affichage HUD (en haut)
+# === HUD ===
         pygame.draw.rect(screen, 'black', (0, 0, width, HUD_HEIGHT))
-        hud_y = 10
-        total_pieces_text = hud_font.render(f"Total Pieces: {total['pieces']}", True, (255, 215, 0))
-        screen.blit(total_pieces_text, (10, hud_y))
+
+        # COLONNE GAUCHE - Statistiques
+        left_x = 10
+        total_pieces_text = hud_font.render(f"Total: {total['pieces']}", True, (255, 215, 0))
+        screen.blit(total_pieces_text, (left_x, 10))
 
         remaining = np.sum(pieces.map)
         proportion_text = hud_font.render(f"Remaining: {remaining}", True, (255, 215, 0))
-        screen.blit(proportion_text, (10, hud_y + 25))
+        screen.blit(proportion_text, (left_x, 35))
 
         # Timer partie en cours
         if not victory_mode:
@@ -107,17 +120,50 @@ def main():
         seconds = int(elapsed_time % 60)
         tenths = int((elapsed_time * 10) % 10)
         timer_text = hud_font.render(f"Time: {minutes:02}:{seconds:02}.{tenths}", True, (255, 215, 0))
-        screen.blit(timer_text, (10, hud_y + 50))
+        screen.blit(timer_text, (left_x, 60))
 
-        # Stats meilleure partie
+        # CENTRE - BARRE DE VIE DE PACMAN
+        bar_width = 180
+        bar_height = 20
+        bar_x = width//2 - bar_width//2
+        bar_y = 15
+        
+        health_ratio = pacman.health / pacman_health
+        health_width = int(bar_width * health_ratio)
+
+        # Couleur selon niveau de vie
+        if health_ratio > 0.6:
+            color = (0, 255, 0)     # Vert
+        elif health_ratio > 0.3:
+            color = (255, 165, 0)   # Orange
+        else:
+            color = (255, 0, 0)     # Rouge
+
+        # Label HP au-dessus de la barre
+        hp_label = hud_font.render("HEALTH", True, (255, 215, 0))
+        screen.blit(hp_label, (width//2 - hp_label.get_width()//2, bar_y - 15))
+        
+        # Fond et barre
+        pygame.draw.rect(screen, (80, 80, 80), (bar_x, bar_y + 10, bar_width, bar_height))
+        pygame.draw.rect(screen, color, (bar_x, bar_y + 10, health_width, bar_height))
+        pygame.draw.rect(screen, (255, 215, 0), (bar_x, bar_y + 10, bar_width, bar_height), 2)
+
+        # COLONNE DROITE - Stats meilleure partie
         best_time = best['time']
         if best_time == float('inf'):
             best_time = 0
         best_minutes = int(best_time // 60)
         best_seconds = int(best_time % 60)
         best_tenths = int((best_time * 10) % 10)
-        best_text = hud_font.render(f"Best: {best['pieces']} pieces in {best_minutes:02}:{best_seconds:02}.{best_tenths}", True, (255, 215, 0))
-        screen.blit(best_text, (width - 350, 10))
+        
+        best_label = hud_font.render("BEST RUN:", True, (255, 215, 0))
+        screen.blit(best_label, (width - 200, 10))
+        
+        best_pieces = hud_font.render(f"{best['pieces']} pieces", True, (255, 215, 0))
+        screen.blit(best_pieces, (width - 200, 35))
+        
+        best_time_text = hud_font.render(f"{best_minutes:02}:{best_seconds:02}.{best_tenths}", True, (255, 215, 0))
+        screen.blit(best_time_text, (width - 200, 60))
 
         pygame.display.flip()
         clock.tick(fps) 
