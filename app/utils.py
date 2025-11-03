@@ -2,6 +2,8 @@ import pygame
 
 fps = 120
 
+HUD_HEIGHT = 80  # Hauteur de la bande HUD
+
 width, height = 600, 520
 pacman_speed = 4
 pacman_color = (10, 225, 146)
@@ -12,7 +14,7 @@ piece_size = 20
 piece_color = (225, 189, 10)
 
 shape_piece_map = (width//piece_size, height//piece_size)
-freq_pieces = 0.05
+freq_pieces = 0.006
 
 def draw_popup(surface, victory:bool, font):
     popup = pygame.Surface((400, 200))
@@ -24,5 +26,5 @@ def draw_popup(surface, victory:bool, font):
         text = font.render("Game Over", True, (255, 215, 0))
     text_rect = text.get_rect(center=(200, 100))
     popup.blit(text, text_rect)
-    surface.blit(popup, ((width - 400) // 2, (height - 200) // 2))
-
+    # Centrage avec prise en compte du HUD
+    surface.blit(popup, ((width - 400) // 2, (height - 200) // 2 + HUD_HEIGHT))

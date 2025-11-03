@@ -8,7 +8,8 @@ from utils import (pacman_color,
                    freq_pieces,
                    shape_piece_map,
                    piece_size,
-                   piece_color)
+                   piece_color,
+                   HUD_HEIGHT)
 
 class Pacman:
     def __init__(self, x, y):
@@ -47,13 +48,15 @@ class Pacman:
         if keys[pygame.K_DOWN]:
             self.y += self.speed
             self.last_action = 'down'
-        if self.y>height-self.size:
-            self.y = height-self.size
-        if self.y<0:
-            self.y = 0
-        if self.x>width-self.size:
-            self.x = width-self.size
-        if self.x<0:
+        
+        # Limites avec HUD_HEIGHT
+        if self.y > height + HUD_HEIGHT - self.size:
+            self.y = height + HUD_HEIGHT - self.size
+        if self.y < HUD_HEIGHT:
+            self.y = HUD_HEIGHT
+        if self.x > width - self.size:
+            self.x = width - self.size
+        if self.x < 0:
             self.x = 0
 
     def draw(self, screen):
@@ -82,7 +85,7 @@ class Piecesmap:
             for col in range(len(self.map[ligne])):
                 if self.map[ligne][col] == 1:
                     piece_x = col * piece_size
-                    piece_y = ligne * piece_size
+                    piece_y = ligne * piece_size + HUD_HEIGHT  # Décalage pour HUD
                     if (pacman_x < piece_x + piece_size and 
                         pacman_x + pacman_size > piece_x and
                         pacman_y < piece_y + piece_size and 
@@ -94,7 +97,8 @@ class Piecesmap:
         for ligne in range(len(self.map)):
             for col in range(len(self.map[ligne])):
                 if self.map[ligne][col] == 1:
-                    screen.blit(self.piece_img, (col * piece_size, ligne * piece_size))
+                    # Décalage vertical de HUD_HEIGHT
+                    screen.blit(self.piece_img, (col * piece_size, ligne * piece_size + HUD_HEIGHT))
 
     def victory(self):
         return not np.any(self.map)

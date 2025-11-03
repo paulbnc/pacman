@@ -1,12 +1,9 @@
-# main.py
 import pygame
-from utils import width, height, draw_popup, fps, piece_size, shape_piece_map
+from utils import width, height, draw_popup, fps, piece_size, shape_piece_map, HUD_HEIGHT
 from objects import Pacman, Piecesmap
 from session_status import best, total
 import time
 import numpy as np
-
-HUD_HEIGHT = 80  # bande pour HUD au-dessus du jeu
 
 def main():
     pygame.init()
@@ -24,6 +21,7 @@ def main():
     pacman = Pacman(width // 2, height // 2 + HUD_HEIGHT)
     pieces = Piecesmap()
     victory_mode = False
+    nb_pieces_partie = np.sum(pieces.map)
 
     scanlines = [y for y in range(HUD_HEIGHT, height + HUD_HEIGHT, 4)]
     restart_rect = pygame.Rect(width//2 - 100, height//2 + HUD_HEIGHT + 60, 200, 60)
@@ -54,6 +52,7 @@ def main():
                 if click:
                     pacman = Pacman(width // 2, height // 2 + HUD_HEIGHT)
                     pieces = Piecesmap()
+                    nb_pieces_partie = np.sum(pieces.map)
                     victory_mode = False
                     start_time = time.time()
             else:
@@ -83,15 +82,15 @@ def main():
             if pieces.victory():
                 victory_mode = True
                 elapsed_time = time.time() - start_time
-                if (total['pieces'] > best['pieces'] or 
-                    (total['pieces'] == best['pieces'] and elapsed_time < best['time'])):
-                    best['pieces'] = total['pieces']
+                if (nb_pieces_partie > best['pieces'] or 
+                    (nb_pieces_partie == best['pieces'] and elapsed_time < best['time'])):
+                    best['pieces'] = nb_pieces_partie
                     best['time'] = elapsed_time
 
         # -------------------------------
         # Affichage HUD (en haut)
         # -------------------------------
-        pygame.draw.rect(screen, (30, 30, 30), (0, 0, width, HUD_HEIGHT))
+        pygame.draw.rect(screen, 'black', (0, 0, width, HUD_HEIGHT))
         hud_y = 10
         total_pieces_text = hud_font.render(f"Total Pieces: {total['pieces']}", True, (255, 215, 0))
         screen.blit(total_pieces_text, (10, hud_y))
