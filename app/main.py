@@ -70,13 +70,16 @@ def main():
         else:
             # Gestion du joueur et des pièces
             pacman.handle_input()
-            pieces.handle_input(pacman.x, pacman.y)
+            pieces.handle_input(pacman)
 
             # Mise à jour du total de pièces mangées
             total['pieces'] += pieces.cpt_pieces
 
             pieces.draw(screen)
             pacman.draw(screen)
+            pacman.clean_bullets()
+            pacman.update_bullets(screen)
+            
 
             # Victoire
             if pieces.victory():
@@ -87,9 +90,7 @@ def main():
                     best['pieces'] = nb_pieces_partie
                     best['time'] = elapsed_time
 
-        # -------------------------------
         # Affichage HUD (en haut)
-        # -------------------------------
         pygame.draw.rect(screen, 'black', (0, 0, width, HUD_HEIGHT))
         hud_y = 10
         total_pieces_text = hud_font.render(f"Total Pieces: {total['pieces']}", True, (255, 215, 0))
